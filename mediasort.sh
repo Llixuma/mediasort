@@ -18,25 +18,6 @@ echo "Executing in $(pwd)"
 
 INDEXFILE="$(pwd)/.index" 2>/dev/null # dont throw file not found error if it doesnt exist
 
-ALBUMDEFINITION=10 # amount of files in a folder to consider it being an album
-
-##
-## in program fuctions
-##
-
-Album() # TODO, look for folders containing mostly one filetype, along the lines of 90% mp3 files and 10% album art
-{
-  ALBUMFILES=0 # number of files in a folder
-  FILEEXTENSION="" # grab the file extension for calcualting percentage
-  FOLDERS=$(awk -F '/' -v OFS='/' 'NF-=2' $INDEXFILE | sort | uniq | sort -h)
-  FOLDERFILES=$(awk -F '/' -v OFS='/' 'NF-=2' $INDEXFILE | sort | uniq -c | sort -h | awk -F '/' '{print $1}')
-  for i in $FOLDERS
-  do
-    echo $i
-    echo
-  done
-}
-
 ##
 ## Option functions
 ##
@@ -64,10 +45,7 @@ CreateIndex()
   echo "This may create a LOT of disk cache"
   echo "use 'echo 3 | sudo tee /proc/sys/vm/drop_caches' to free up the cache again"
   trap "echo ;echo Terminated, deleting unfinished index...; rm $INDEXFILE; exit 1" INT
-  for i in $(ls)
-  do
-    find $(pwd)/$i -type f -exec file --mime-type {} \+ >> $INDEXFILE
-  done
+  find "$(pwd)" -type f -exec file --mime-type {} \+ >> "$INDEXFILE"
   echo done
 }
 
@@ -151,7 +129,6 @@ case $OPTION in
   rebuild) CreateIndex ;;
   move) Move ;;
   DELETE) Delete ;;
-  album) Album ;;
   *) ShowUsage ;;
 esac
 
