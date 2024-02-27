@@ -1,5 +1,6 @@
 #!/bin/bash
-# 22.01.24
+# created 22.02.24
+# updated 27.02.24 - rename variables and add comments
 # By Llixuma
 # rectal use only
 # dont blame me if you break stuff with this thing
@@ -7,12 +8,12 @@
 MFVERSION="2.24-beta"
 
 # store args in global variables
-OPT1=$1 # Directory
-OPT2=$2 # Option
-OPT3=$3 # Suboption
-OPT4=$4 # Output directory
+DIRECTORY=$1 # Directory
+OPTION=$2 # Option
+SUB_OPTION=$3 # Suboption
+OUTPUT_DIRECTORY=$4 # Output directory
 
-cd $OPT1 > /dev/null
+cd $DIRECTORY > /dev/null
 echo "Executing in $(pwd)"
 
 INDEXFILE="$(pwd)/.index" 2>/dev/null # dont throw file not found error if it doesnt exist
@@ -23,15 +24,15 @@ ALBUMDEFINITION=10 # amount of files in a folder to consider it being an album
 ## in program fuctions
 ##
 
-Album()
+Album() # TODO, look for folders containing mostly one filetype, along the lines of 90% mp3 files and 10% album art
 {
   ALBUMFILES=0 # number of files in a folder
-  FILEEXTENSION="" # grab the file extension for
+  FILEEXTENSION="" # grab the file extension for calcualting percentage
   FOLDERS=$(awk -F '/' -v OFS='/' 'NF-=2' $INDEXFILE | sort | uniq | sort -h)
   FOLDERFILES=$(awk -F '/' -v OFS='/' 'NF-=2' $INDEXFILE | sort | uniq -c | sort -h | awk -F '/' '{print $1}')
   for i in $FOLDERS
   do
-    echo $i/
+    echo $i
     echo
   done
 }
@@ -72,23 +73,23 @@ CreateIndex()
 
 List()
 {
-  if echo $FILETYPES | grep -q "$OPT3" && [ "$OPT3" != "" ]
+  if echo $FILETYPES | grep -q "$SUB_OPTION" && [ "$SUB_OPTION" != "" ]
   then
-    grep "$OPT3" $INDEXFILE | more
+    grep "$SUB_OPTION" $INDEXFILE | more
     exit 0
-  elif [ "$OPT3" == "" ]
+  elif [ "$SUB_OPTION" == "" ]
   then
     awk -F ' ' '{print $NF}' $INDEXFILE | sort | uniq -c | sort -h | more
   else
-    echo "couldn't find $OPT3"
+    echo "couldn't find $SUB_OPTION"
   fi
 }
 
 Move()
 {
-  if echo $FILETYPES | grep -q "$OPT3" && [ "$OPT3" != "" ]
+  if echo $FILETYPES | grep -q "$SUB_OPTION" && [ "$SUB_OPTION" != "" ]
   then
-    grep "$OPT3" $INDEXFILE
+    grep "$SUB_OPTION" $INDEXFILE
   else
     echo "this its temporary"
     exit 1
@@ -97,16 +98,16 @@ Move()
 
 Delete()
 {
-  TOBEDELETED=$(grep "$OPT3" $INDEXFILE | awk -F':' '{print $1}')
-  if echo $FILETYPES | grep -q "$OPT3" && [[ "$OPT3" != "" ]] && [[ "$TOBEDELETED" != "" ]]
+  TOBEDELETED=$(grep "$SUB_OPTION" $INDEXFILE | awk -F':' '{print $1}')
+  if echo $FILETYPES | grep -q "$SUB_OPTION" && [[ "$SUB_OPTION" != "" ]] && [[ "$TOBEDELETED" != "" ]]
   then
     echo "THIS WILL REMOVE EVERY FILE IN THE LIST BELOW"
     echo
-    grep "$OPT3" $INDEXFILE | awk -F':' '{print $1}'
+    grep "$SUB_OPTION" $INDEXFILE | awk -F':' '{print $1}'
     echo
     echo
-    echo "if you are absolutely sure you want to remove these files type"
-    echo "                       "YES I AM SURE"                        "
+    echo "if you are absolutely sure you want to remove these files, type:"
+    echo "                        "YES I AM SURE"                         "
     echo
     read FUCKMYSHITUP
     if [[ $FUCKMYSHITUP = "YES I AM SURE" ]]
@@ -117,7 +118,7 @@ Delete()
         rm $delete
       done
       echo done
-      CreateIndex
+      CreateIndex # rebuild index because i still need to find a way to edit out the deleted files from the existing index
     else
       echo "Exiting"
     fi
@@ -145,7 +146,7 @@ echo
 FILETYPES=$(awk -F ' ' '{print $NF}' $INDEXFILE | sort | uniq)
 
 
-case $OPT2 in
+case $OPTION in
   list) List ;;
   rebuild) CreateIndex ;;
   move) Move ;;
